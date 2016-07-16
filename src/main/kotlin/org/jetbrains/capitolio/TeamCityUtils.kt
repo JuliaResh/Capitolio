@@ -1,4 +1,4 @@
-package capitolio
+package org.jetbrains.capitolio
 
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
@@ -7,10 +7,7 @@ import org.jsoup.Jsoup
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import java.net.ConnectException
-import java.net.HttpURLConnection
-import java.net.URI
-import java.net.URL
+import java.net.*
 
 /**
  * Created by Julia.Reshetnikova on 30-Jun-16.
@@ -99,6 +96,8 @@ fun waitForServerStart(url:String) {
             connection.disconnect()
         } catch (e: ConnectException) {
             Thread.sleep(1000)
+        } catch (e: SocketException) {
+            continue //retry
         }
 
         if (responseCode == 200 || responseCode == 403) {
