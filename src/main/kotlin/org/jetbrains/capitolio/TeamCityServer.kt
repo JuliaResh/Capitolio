@@ -1,9 +1,5 @@
 package org.jetbrains.capitolio
 
-import capitolio.defaultInstallPath
-import capitolio.getServerPid
-import capitolio.waitForServerStart
-import capitolio.waitForServerStop
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.CmdLineArgument
 import com.xebialabs.overthere.CmdLineArgument.arg
@@ -85,9 +81,26 @@ class TeamCityServer(var host: Host) {
         host.startProcess(cmdLine)
     }
 
-    fun stop() {
+    fun stopServer() {
         host.setWorkingDirectory("$installPath/bin")
-        host.execute(CmdLine.build("cmd", "/c", "teamcity-server.bat", "stop", "-force", "60"))
+        stop(TEAMCITY_SERVER_SCRIPT)
+    }
+
+    fun stop() {
+        stopBundledAgent()
+        stopServer()
+    }
+
+    fun stopBundledAgent() {
+        host.setWorkingDirectory("$installPath/buildAgent/bin")
+        stop(AGENT_SCRIPT)
+    }
+
+    private fun stop(script: String) {
+        host.execute(CmdLine.build("cmd", "/c", script, "stop", "-force", "60"))
+    }
+
+    fun waitForServerStop() {
         waitForServerStop(port, getServerPid())
     }
 

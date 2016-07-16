@@ -1,8 +1,8 @@
 package org.jetbrains.capitolio
 
-import capitolio.defaultInstallPath
-import capitolio.downloadTeamCityDist
-import capitolio.getLatestReleasedVersionNumber
+import org.jetbrains.capitolio.defaultInstallPath
+import org.jetbrains.capitolio.downloadTeamCityDist
+import org.jetbrains.capitolio.getLatestReleasedVersionNumber
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.ConnectionOptions
 import com.xebialabs.overthere.local.LocalConnection
