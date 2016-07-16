@@ -1,9 +1,13 @@
-package capitolio
+package org.jetbrains.capitolio
 
+import capitolio.defaultInstallPath
+import capitolio.downloadTeamCityDist
+import capitolio.getLatestReleasedVersionNumber
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.ConnectionOptions
 import com.xebialabs.overthere.local.LocalConnection
 import com.xebialabs.overthere.local.LocalFile
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import java.io.*
 
@@ -23,7 +27,7 @@ class LocalHost() : Host {
     override fun installTeamCity(dist: File, installPath: String?): TeamCityServer {
         val destinationPath = installPath ?: defaultInstallPath()
         extract(dist, File(destinationPath))
-        return TeamCityServer(this, installPath ?: defaultInstallPath())
+        return TeamCityServer(this, "${installPath ?: defaultInstallPath()}/TeamCity")
     }
 
     override fun installTeamCity(version: String?, installPath: String?): TeamCityServer {
@@ -38,7 +42,7 @@ class LocalHost() : Host {
         local.workingDirectory = local.getFile(directoryPath)
     }
 
-    override fun execute(cmdLine:CmdLine) {
+    override fun execute(cmdLine: CmdLine) {
         local.execute(cmdLine)
     }
 
@@ -46,23 +50,23 @@ class LocalHost() : Host {
         local.startProcess(cmdLine)
     }
 
-    fun delete(file:File) {
+    fun delete(file: File) {
         LocalFile(local, file).delete()
     }
 
-    fun deleteRecursively(file:File) {
+    fun deleteRecursively(file: File) {
         LocalFile(local, file).deleteRecursively()
     }
 
-    fun extract(archive:File, destinationPath:File) {
+    fun extract(archive: File, destinationPath: File) {
         unTarGz(archive, destinationPath)
     }
 
 
-    private fun unTarGz(archive:File, destinationPath:File) {
+    private fun unTarGz(archive: File, destinationPath: File) {
         destinationPath.mkdirs();
 
-        val tarIn = org.apache.commons.compress.archivers.tar.TarArchiveInputStream(GzipCompressorInputStream(BufferedInputStream(FileInputStream(archive))))
+        val tarIn = TarArchiveInputStream(GzipCompressorInputStream(BufferedInputStream(FileInputStream(archive))))
         System.out.println("Extracting [$archive] into [$destinationPath]");
 
         var tarEntry = tarIn.nextTarEntry

@@ -1,20 +1,18 @@
-package capitolio
+package org.jetbrains.capitolio
 
-import capitolio.ServerModeEnum.BUILD_MESSAGE_PROCESSOR
-import capitolio.ServerModeEnum.MAIN_SERVER
+import capitolio.defaultInstallPath
+import capitolio.getServerPid
+import capitolio.waitForServerStart
+import capitolio.waitForServerStop
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.CmdLineArgument
 import com.xebialabs.overthere.CmdLineArgument.arg
 import com.xebialabs.overthere.OperatingSystemFamily.WINDOWS
 import org.apache.commons.io.FileUtils
+import org.jetbrains.capitolio.ServerModeEnum.BUILD_MESSAGE_PROCESSOR
+import org.jetbrains.capitolio.ServerModeEnum.MAIN_SERVER
 import java.io.File
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Paths
-
 import java.util.*
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 /**
  * Created by Julia.Reshetnikova on 30-Jun-16.
@@ -24,9 +22,7 @@ class TeamCityServer(var host: Host) {
 
     var installPath = "${defaultInstallPath()}/TeamCity"
     var port:Int = 8111
-        set(value) { changePort(value) }
-    var catalinaPort:Int = null!!
-        set(value) { changeCatalinaPort(value) }
+    var catalinaPort:Int = 8005
     var startUpOptions:String? = null
     var startJdkPath:String? = null
     var dataDirectoryPath:String? = null
@@ -63,7 +59,7 @@ class TeamCityServer(var host: Host) {
     }
 
     private fun start(script:String) {
-        val cmdLine = com.xebialabs.overthere.CmdLine()
+        val cmdLine = CmdLine()
 
         if (!startUpOptions.isNullOrEmpty()) {
             cmdLine.add(startUpOptionsCmdLine()).addArgument("&&")
@@ -122,14 +118,22 @@ class TeamCityServer(var host: Host) {
         }
     }
 
-    private fun changePort(value:Int) {
-
+    fun configureServerPort(value:Int) {
         val serverConf = File("$installPath/conf/server.xml")
-        var content = org.apache.commons.io.FileUtils.readFileToString((serverConf), "UTF-8")
-        content.replace("Connector port=\"$port\"", "Connector port=\"$value\"")
+        var content = FileUtils.readFileToString((serverConf), "UTF-8")
+        content = content.replace("<Connector port=\"$port\"", "<Connector port=\"$value\"")
         FileUtils.writeStringToFile(serverConf, content, "UTF-8")
 
         this.port = value
+    }
+
+    fun configureCatalinaPort(value:Int) {
+        val serverConf = File("$installPath/conf/server.xml")
+        var content = FileUtils.readFileToString((serverConf), "UTF-8")
+        content = content.replace("<Server port=\"$catalinaPort\"", "<Server port=\"$value\"")
+        FileUtils.writeStringToFile(serverConf, content, "UTF-8")
+
+        this.catalinaPort = value
     }
 
 

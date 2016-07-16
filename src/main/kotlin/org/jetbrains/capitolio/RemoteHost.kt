@@ -1,5 +1,6 @@
-package capitolio
+package org.jetbrains.capitolio
 
+import org.jetbrains.capitolio.Host
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.OperatingSystemFamily
 import java.io.File

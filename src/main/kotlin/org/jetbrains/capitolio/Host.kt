@@ -1,4 +1,4 @@
-package capitolio
+package org.jetbrains.capitolio
 
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.OperatingSystemFamily

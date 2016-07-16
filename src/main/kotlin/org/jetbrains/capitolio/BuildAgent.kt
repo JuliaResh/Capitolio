@@ -1,4 +1,4 @@
-package capitolio
+package org.jetbrains.capitolio
 
 /**
  * Created by Julia.Reshetnikova on 15-Jul-16.
