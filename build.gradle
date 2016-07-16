@@ -1,0 +1,36 @@
+buildscript {
+    ext.kotlin_version = '1.0.3'
+    repositories {
+        mavenCentral()
+        maven { url 'http://repository.jetbrains.com/all' }
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'kotlin'
+
+def testNGVersion = '6.9.9'
+def assertJVersion = '2.1.0'
+
+dependencies {
+    compile 'com.vmware:vijava:5.1',
+            'com.amazonaws:aws-java-sdk:1.10.29',
+            'com.xebialabs.overthere:overthere:4.3.3',
+            'commons-io:commons-io:2.4',
+            'org.jsoup:jsoup:1.8.2',
+            'org.apache.commons:commons-compress:1.2'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.47'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    testCompile "org.testng:testng:$testNGVersion",
+            "org.assertj:assertj-core:$assertJVersion"
+}
+
+repositories {
+    mavenCentral()
+}
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
