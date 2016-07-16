@@ -58,6 +58,14 @@ class TeamCityServer(var host: Host) {
         waitForServerStart("http://${host.host}:$port/mnt")
     }
 
+    fun start() {
+        if (startMode.equals(BUILD_MESSAGE_PROCESSOR)) {
+            startServer()
+        } else {
+            runAll()
+        }
+    }
+
     private fun start(script:String) {
         val cmdLine = CmdLine()
 
