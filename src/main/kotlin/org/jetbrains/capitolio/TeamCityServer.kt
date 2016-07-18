@@ -5,7 +5,7 @@ import com.xebialabs.overthere.CmdLineArgument
 import com.xebialabs.overthere.CmdLineArgument.arg
 import com.xebialabs.overthere.OperatingSystemFamily.WINDOWS
 import org.apache.commons.io.FileUtils
-import org.jetbrains.capitolio.ServerModeEnum.BUILD_MESSAGE_PROCESSOR
+import org.jetbrains.capitolio.ServerModeEnum.BUILD_MESSAGES_PROCESSOR
 import org.jetbrains.capitolio.ServerModeEnum.MAIN_SERVER
 import java.io.File
 import java.util.*
@@ -55,7 +55,7 @@ class TeamCityServer(var host: Host) {
     }
 
     fun start() {
-        if (startMode.equals(BUILD_MESSAGE_PROCESSOR)) {
+        if (startMode.equals(BUILD_MESSAGES_PROCESSOR)) {
             startServer()
         } else {
             runAll()
@@ -121,7 +121,7 @@ class TeamCityServer(var host: Host) {
                 add(arg(host.envKeyword))
                 add(arg("TEAMCITY_SERVER_OPTS=$startUpOptions"))
 
-                if (startMode.equals(BUILD_MESSAGE_PROCESSOR)) {
+                if (startMode.equals(BUILD_MESSAGES_PROCESSOR)) {
                     add(arg("-Dteamcity.server.mode=build-messages-processor"))
                     add(arg("-Dteamcity.server.rootURL=http://${host.host}:$port"))
                 }
