@@ -9,12 +9,19 @@ import java.net.URL
  * Created by Julia.Reshetnikova on 15-Jul-16.
  */
 class RemoteHost(override val host: String, override val os: OperatingSystemFamily) : Host {
-
-    override fun installBuildAgent(serverUrl: URL, dist: File?, installPath: String): BuildAgent {
+    override fun installTeamCity(dist: File, installPath: File): TeamCityServer {
         throw UnsupportedOperationException("not implemented")
     }
 
-    override fun installTeamCity(version: String?, installPath: String?): TeamCityServer {
+    override fun installTeamCity(version: String?, installPath: File): TeamCityServer {
+        throw UnsupportedOperationException("not implemented")
+    }
+
+    override fun setWorkingDirectory(directoryPath: File) {
+        throw UnsupportedOperationException("not implemented")
+    }
+
+    override fun installBuildAgent(serverUrl: URL, dist: File?, installPath: String): BuildAgent {
         throw UnsupportedOperationException("not implemented")
     }
 
@@ -29,13 +36,6 @@ class RemoteHost(override val host: String, override val os: OperatingSystemFami
     override val envKeyword: String
         get() = throw UnsupportedOperationException()
 
-    override fun setWorkingDirectory(directoryPath: String) {
-        throw UnsupportedOperationException("not implemented")
-    }
-
-    override fun installTeamCity(dist: File, installPath: String?): TeamCityServer {
-        throw UnsupportedOperationException("not implemented")
-    }
 
 }
 

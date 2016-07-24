@@ -6,6 +6,6 @@ package org.jetbrains.capitolio
 enum class ServerModeEnum {
 
     MAIN_SERVER,
-    BUILD_MESSAGES_PROCESSOR
+    RUNNING_BUILDS_NODE
 
 }

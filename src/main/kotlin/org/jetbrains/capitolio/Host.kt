@@ -10,11 +10,11 @@ import java.net.URL
  */
 interface Host {
 
-    fun installTeamCity(dist: File, installPath:String? = defaultInstallPath()): TeamCityServer
-    fun installTeamCity(version:String? = null, installPath:String? = defaultInstallPath()): TeamCityServer
+    fun installTeamCity(dist: File, installPath:File = defaultInstallPath()): TeamCityServer
+    fun installTeamCity(version:String? = null, installPath:File = File(defaultInstallPath(), "TeamCity")): TeamCityServer
 
     fun installBuildAgent(serverUrl: URL, dist: File? = null, installPath: String = "${defaultInstallPath()}/BuildAgent"): BuildAgent
-    fun setWorkingDirectory(directoryPath:String)
+    fun setWorkingDirectory(directoryPath:File)
 
     fun  startProcess(cmdLine: CmdLine)
 

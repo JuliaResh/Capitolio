@@ -1,68 +1,86 @@
 package org.jetbrains.capitolio
 
 import com.xebialabs.overthere.CmdLine
+import com.xebialabs.overthere.CmdLine.build
 import com.xebialabs.overthere.CmdLineArgument
 import com.xebialabs.overthere.CmdLineArgument.arg
 import com.xebialabs.overthere.OperatingSystemFamily.WINDOWS
 import org.apache.commons.io.FileUtils
-import org.jetbrains.capitolio.ServerModeEnum.BUILD_MESSAGES_PROCESSOR
 import org.jetbrains.capitolio.ServerModeEnum.MAIN_SERVER
+import org.jetbrains.capitolio.ServerModeEnum.RUNNING_BUILDS_NODE
 import java.io.File
+import java.net.URL
 import java.util.*
 
 /**
  * Created by Julia.Reshetnikova on 30-Jun-16.
  */
 
-class TeamCityServer(var host: Host) {
+class TeamCityServer(val host: Host, val installPath: File? = File(defaultInstallPath(), "TeeamCity")) {
 
-    var installPath = "${defaultInstallPath()}/TeamCity"
+    private val binPath = File(installPath, "bin")
+    private val confPath = File(installPath, "conf")
+    private val logPath = File(installPath, "log")
+
+    private val ext = if (host.os.equals(WINDOWS)) "bat" else "sh"
+    private val TEAMCITY_SERVER_SCRIPT = "teamcity-server.$ext"
+    private val RUN_ALL_SCRIPT = "runAll.$ext"
+    private val CMD_EXE = ArrayList<CmdLineArgument>()
+
     var port:Int = 8111
     var catalinaPort:Int = 8005
+    var serverUrl = URL("http://$host:$port")
+        get() { return URL("http://$host:$port") }
+
     var startUpOptions:String? = null
     var startJdkPath:String? = null
     var dataDirectoryPath:String? = null
-    var startMode = MAIN_SERVER
 
-    val ext = if (host.os.equals(WINDOWS)) "bat" else "sh"
-    val TEAMCITY_SERVER_SCRIPT = "teamcity-server.$ext"
-    val RUN_ALL_SCRIPT = "runAll.$ext"
-    val AGENT_SCRIPT = "agent.$ext"
+    var serverRole = MAIN_SERVER
+        set(value) { setRole(value) }
 
-    val isBuildMessageProcessor = false
+    private val bundledAgent = BuildAgent(host, serverUrl, File(installPath, "buildAgent"))
 
-    constructor(host: LocalHost, installPath: String) : this(host) {
-        this.installPath = installPath
-    }
 
-    fun runAll() {
-        host.setWorkingDirectory("$installPath/bin")
-        start(RUN_ALL_SCRIPT)
-    }
+    constructor(host: LocalHost) : this(host, null) {}
 
-    fun startBundledAgent() {
-        host.setWorkingDirectory("$installPath/buildAgent/bin")
-        start(AGENT_SCRIPT)
-    }
-
-    fun startServer() {
-        host.setWorkingDirectory("$installPath/bin")
-        start(TEAMCITY_SERVER_SCRIPT)
-    }
-
-    fun waitForMaintenancePage() {
-        waitForServerStart("http://${host.host}:$port/mnt")
-    }
-
-    fun start() {
-        if (startMode.equals(BUILD_MESSAGES_PROCESSOR)) {
-            startServer()
+    init {
+        if (host.os.equals(WINDOWS)) {
+            CMD_EXE.add(arg("cmd"))
+            CMD_EXE.add(arg("/c"))
         } else {
-            runAll()
+            CMD_EXE.add(arg("bash"))
         }
     }
 
+    fun start() { startServer() }
+
+    fun runAll() { start(RUN_ALL_SCRIPT) }
+
+    fun startServer() { start(TEAMCITY_SERVER_SCRIPT) }
+
+    fun startBundledAgent() { bundledAgent.start() }
+
+    fun waitForMaintenancePage() { waitForServerStart("$serverUrl/mnt") }
+
+
+    fun stop() {
+        stopBundledAgent()
+        stopServer()
+    }
+
+    fun stopServer() { stop(TEAMCITY_SERVER_SCRIPT) }
+
+    fun stopAll() { stop(RUN_ALL_SCRIPT) }
+
+    fun stopBundledAgent() { bundledAgent.stop() }
+
+    fun waitForServerStop() { waitForServerStop(port, getServerPid()) }
+
+
     private fun start(script:String) {
+        host.setWorkingDirectory(binPath)
+
         val cmdLine = CmdLine()
 
         if (!startUpOptions.isNullOrEmpty()) {
@@ -75,33 +93,24 @@ class TeamCityServer(var host: Host) {
             cmdLine.add(startJavaCmdLine()).addArgument("&&")
         }
 
-        cmdLine.addArgument("cmd").addArgument("/c")
-        cmdLine.addArgument(script).addArgument("start")
-
+        cmdLine.add(CMD_EXE).addArgument(script).addArgument("start")
+        cmdLine.addRaw(">>").addArgument("$logPath/start.log")
         host.startProcess(cmdLine)
     }
 
-    fun stopServer() {
-        host.setWorkingDirectory("$installPath/bin")
-        stop(TEAMCITY_SERVER_SCRIPT)
-    }
-
-    fun stop() {
-        stopBundledAgent()
-        stopServer()
-    }
-
-    fun stopBundledAgent() {
-        host.setWorkingDirectory("$installPath/buildAgent/bin")
-        stop(AGENT_SCRIPT)
-    }
-
     private fun stop(script: String) {
-        host.execute(CmdLine.build("cmd", "/c", script, "stop", "-force", "60"))
+        host.setWorkingDirectory(binPath)
+        host.execute(CmdLine().add(CMD_EXE).addNested(build(script, "stop", "-force", "60")))
     }
 
-    fun waitForServerStop() {
-        waitForServerStop(port, getServerPid())
+    private fun setRole(role: ServerModeEnum) {
+        val teamcityStartupProperties = File(installPath, "conf/teamcity-startup.properties")
+        if (role.equals(RUNNING_BUILDS_NODE)) {
+            FileUtils.writeStringToFile(teamcityStartupProperties, "teamcity.server.role=running-builds-node")
+            FileUtils.writeStringToFile(teamcityStartupProperties, "teamcity.rootUrl=$serverUrl", true)
+        } else if (teamcityStartupProperties.exists()) {
+            teamcityStartupProperties.delete()
+        }
     }
 
     private fun startJavaCmdLine(): ArrayList<CmdLineArgument> {
@@ -120,11 +129,6 @@ class TeamCityServer(var host: Host) {
             init {
                 add(arg(host.envKeyword))
                 add(arg("TEAMCITY_SERVER_OPTS=$startUpOptions"))
-
-                if (startMode.equals(BUILD_MESSAGES_PROCESSOR)) {
-                    add(arg("-Dteamcity.server.mode=build-messages-processor"))
-                    add(arg("-Dteamcity.server.rootURL=http://${host.host}:$port"))
-                }
             }
         }
     }
@@ -156,6 +160,5 @@ class TeamCityServer(var host: Host) {
 
         this.catalinaPort = value
     }
-
 
 }

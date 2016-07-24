@@ -3,6 +3,7 @@ package org.jetbrains.capitolio
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.CmdLineArgument
 import com.xebialabs.overthere.OperatingSystemFamily.WINDOWS
+import java.io.File
 import java.net.URL
 import java.util.*
 
@@ -10,18 +11,16 @@ import java.util.*
  * Created by Julia.Reshetnikova on 15-Jul-16.
  */
 
-class BuildAgent(var host: Host, var serverUrl: URL) {
+class BuildAgent(val host: Host, var serverUrl: URL,
+                 val installPath: File? = File(defaultInstallPath(), "BuildAgent")) {
 
-    var installPath = "${defaultInstallPath()}/BuildAgent"
     var port = 9090
     var startJdkPath: String? = null
 
     val ext = if (host.os.equals(WINDOWS)) "bat" else "sh"
     val AGENT_SCRIPT = "agent.$ext"
 
-    constructor(host: Host, serverUrl: URL, installPath: String) : this(host, serverUrl) {
-        this.installPath = installPath
-    }
+    constructor(host: Host, serverUrl: URL) : this(host, serverUrl, null) {}
 
     fun configure(serverUrl: String? = null, port: Int? = null, name: String? = null) {
         val cmdLine = CmdLine()

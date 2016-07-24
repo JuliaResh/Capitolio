@@ -3,7 +3,7 @@ package org.jetbrains.capitolio
 import com.xebialabs.overthere.CmdLine
 import com.xebialabs.overthere.ConnectionOptions
 import com.xebialabs.overthere.OperatingSystemFamily
-import com.xebialabs.overthere.OperatingSystemFamily.*
+import com.xebialabs.overthere.OperatingSystemFamily.WINDOWS
 import com.xebialabs.overthere.local.LocalConnection
 import com.xebialabs.overthere.local.LocalFile
 import org.apache.commons.compress.archivers.ArchiveInputStream
@@ -25,14 +25,13 @@ class LocalHost(): Host {
     override var host = "localhost"
     override var envKeyword = if (os.equals(WINDOWS)) "set" else "export"
 
-    override fun installTeamCity(dist: File, installPath: String?): TeamCityServer {
-        val destinationPath = installPath ?: defaultInstallPath()
-        extract(dist, File(destinationPath))
+    override fun installTeamCity(dist: File, installPath: File): TeamCityServer {
+        extract(dist, installPath)
 
-        return TeamCityServer(this, "${installPath ?: defaultInstallPath()}/TeamCity")
+        return TeamCityServer(this, installPath)
     }
 
-    override fun installTeamCity(version: String?, installPath: String?): TeamCityServer {
+    override fun installTeamCity(version: String?, installPath: File): TeamCityServer {
         val dist = downloadTeamCityDist(if (!version.isNullOrEmpty()) version!! else getLatestReleasedVersionNumber())
         val tc = installTeamCity(dist, installPath)
         delete(dist)
@@ -51,8 +50,8 @@ class LocalHost(): Host {
         return BuildAgent(this, serverUrl)
     }
 
-    override fun setWorkingDirectory(directoryPath: String) {
-        local.workingDirectory = local.getFile(directoryPath)
+    override fun setWorkingDirectory(directoryPath: File) {
+        local.workingDirectory = LocalFile(local, directoryPath)
     }
 
     override fun execute(cmdLine: CmdLine) {
@@ -87,16 +86,11 @@ class LocalHost(): Host {
 
     private fun extract(input: ArchiveInputStream, destinationFolder: File) {
 
-        if (!destinationFolder.exists()) {
-            destinationFolder.mkdirs()
-        }
-
         var archiveEntry = input.nextEntry
 
         while (archiveEntry != null) {
-
             val buffer = ByteArray(2048)
-            val destPath = File(destinationFolder, archiveEntry.name)
+            val destPath = File(destinationFolder, archiveEntry.name.replace("TeamCity/", ""))
 
             if (archiveEntry.isDirectory) {
                 destPath.mkdirs()
@@ -120,6 +114,5 @@ class LocalHost(): Host {
         }
 
         input.close()
-
     }
 }

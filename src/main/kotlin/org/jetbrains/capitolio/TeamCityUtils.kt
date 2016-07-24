@@ -13,15 +13,15 @@ import java.net.*
  * Created by Julia.Reshetnikova on 30-Jun-16.
  */
 
-fun defaultInstallPath(): String {
+fun defaultInstallPath(): File {
     val installPath: String
     if (true) {
-        installPath = "C:/"
+        installPath = "C:"
     } else {
-        installPath = "/etc/"
+        installPath = "/etc"
     }
 
-    return installPath
+    return File(installPath)
 }
 
 fun downloadTeamCityDist(version: String): File {
