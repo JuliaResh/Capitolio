@@ -1,2 +1,2 @@
 # Capitolio
-Java library to manage TeamCity installations
+Small library to manage TeamCity installations written in Kotlin.
